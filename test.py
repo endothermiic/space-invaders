@@ -12,11 +12,11 @@ def main(image_name):
     mif_file = open(mif_name, 'w+')
 
     mif_file.write(
-        'DEPTH={};\nWIDTH={};\nADDRESS_RADIX=UNS;\nDATA_RADIX=BIN;\nCONTENT\nBEGIN\n\n'.format(len(pixels), 3))
+        'DEPTH={};\nWIDTH={};\nADDRESS_RADIX=HEX;\nDATA_RADIX=BIN;\nCONTENT\nBEGIN\n\n'.format(len(pixels), 3))
     address = 0
     for i in range(image.size[1]):
         for j in range(image.size[0]):
-            mif_file.write("[" + str(address) + "]" + ": ")
+            mif_file.write("[" + hex(address)[2:] + "]" + ": ")
             mif_file.write(' ' + three_bit_conversion(pixels[address]))
             address += 1
             mif_file.write(';\n')
