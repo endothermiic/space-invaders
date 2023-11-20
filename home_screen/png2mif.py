@@ -2,7 +2,7 @@ import sys
 
 from PIL import Image
 
-image_name = "si.png"
+image_name = "homeScreen.png"
 def main(image_name):
     image = Image.open(image_name, 'r')
     pixels = list(image.getdata())
