@@ -16,7 +16,7 @@ def main(image_name):
     address = 0
     for i in range(image.size[1]):
         for j in range(image.size[0]):
-            mif_file.write("[" + hex(address)[2:] + "]" + ": ")
+            mif_file.write(hex(address)[2:] + ": ")
             mif_file.write(' ' + three_bit_conversion(pixels[address]))
             address += 1
             mif_file.write(';\n')
