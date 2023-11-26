@@ -1,0 +1,362 @@
+//`include "mothership.v"
+
+module rocket(reset, clk, start, left, right, screenCleared, drewHomeBase, xout, yout, colourOut);
+   parameter X_SCREEN_PIXELS = 8'd160;
+   parameter Y_SCREEN_PIXELS = 7'd120;
+	parameter xStart = 8'd73; //start of 11x10 square
+	parameter yStart = 7'd105;
+
+   input reset, clk, start, left, right;
+	
+   output  [7:0] xout;  
+	output  [6:0] yout;
+	output  [2:0] colourOut;// VGA pixel coordinates
+   output  screenCleared, drewHomeBase;
+	wire leftEn, rightEn, screenClearEn, drawEn;
+
+	
+	//screencleared, rocketcleared assigned in control path
+//	controlpath c0(.clk(clk), 
+//						.reset(reset), //clear all 
+//						.moveLeft(left),
+//						.start(start), //put to centre of screen - if start high, makes plot high
+//						.moveRight(right),
+//						.screenCleared(screenCleared),
+//						.rocketCleared(rocketCleared));
+
+	//xout, yout, colourOut assigned in data path 
+	datapath d0(.clk(clk), 
+						.reset(reset), 
+						.leftEn(leftEn),
+						.rightEn(rightEn), //to move: clear, update x coord, redraw 
+						.screenClearEn(screenClearEn),
+						.screenCleared(screenCleared), 
+						.drawEn(drawEn),
+						.drewHomeBase(drewHomeBase),
+						.xout(xout), 
+						.yout(yout), 
+						.colourOut(colourOut));
+						
+						
+	controlpath c0 (.clk(clk), 
+						.start(start), 
+						.command_left(left), 
+						.command_right(right), 
+						.reset(reset),
+						.screenCleared(screenCleared),
+						.screenClearEn(screenClearEn),
+						.drewHomebase(drewHomeBase),
+						.drawEn(drawEn),
+						.leftEn(leftEn),
+						.rightEn(rightEn));
+						
+
+endmodule // part2
+
+//
+//module controlpath(input clk, reset, moveLeft, moveRight, start, plot, 
+//						output reg screenCleared, rocketCleared);
+//	parameter X_SCREEN_PIXELS = 8'd160;
+//   parameter Y_SCREEN_PIXELS = 7'd120;
+//	
+//
+//	reg [2:0] current_state, next_state; 
+//	
+//	localparam START = 3'd0, CLEAR_SCREEN = 3'd1, CLEAR_ROCKET = 3'd2, DRAW_ROCKET = 3'd3, IDLE = 3'd4;
+//	
+//	always@(*)
+//	begin: state_table
+//		case(current_state)
+//			START: next_state = plot ? IDLE : CLEAR_SCREEN;
+//			CLEAR_SCREEN: next_state = screenCleared ? IDLE : CLEAR_ROCKET;
+//			CLEAR_ROCKET: next_state = rocketCleared ? IDLE : DRAW_ROCKET;
+//			DRAW_ROCKET: next_state = IDLE;
+//			default: IDLE;
+//		endcase
+//	end
+//	
+//	always@(posedge clk)
+//	begin: state_FFs
+//		if (!reset) current_state <= IDLE;
+//		else current_state <= next_state;
+//	end
+//	
+//	always@(*)
+//	begin: enable_signals
+//		screenCleared = 1'b0;
+//		rocketCleared = 1'b0;
+//		case(current_state)
+//			CLEAR_ROCKET: screenCleared = 1'b1;
+//			DRAW_ROCKET: rocketCleared = 1'b1;
+//		endcase
+//	end
+//endmodule
+
+module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
+						output reg screenCleared, //changed
+						output reg drewHomeBase, //changed
+						output reg [7:0] xout, 
+						output reg [6:0] yout, 
+						output reg [2:0] colourOut);					
+	parameter X_SCREEN_PIXELS = 8'd160;
+   parameter Y_SCREEN_PIXELS = 7'd120;
+	parameter xStart = 8'd73; //start of 11x10 square
+	parameter yStart = 7'd105;
+	
+	reg [7:0] xorig = xStart; //shoudl start at xStart, yStart
+	reg [6:0] yorig = yStart;
+	
+	reg [6:0] address = 6'b0;
+	wire [2:0]shipColour;
+	
+	mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(shipColour));
+						
+	always@(posedge clk)
+	begin
+		if (reset) //active hight - TODO / fix
+			begin
+				xout <= 8'b0; 
+				yout <= 7'b0;
+				colourOut <= 3'b0;
+				screenCleared <= 1'b0;
+				drewHomeBase <= 1'b0;
+			end
+		if (screenClearEn) //clears entire screen
+			begin 
+					if (xout == X_SCREEN_PIXELS - 1 && yout == Y_SCREEN_PIXELS - 1) 
+						begin
+							screenCleared <= 1'b1;
+							xout <= xorig; 
+							yout <= yorig;
+						end
+					else
+						begin
+							if (xout == 8'd159)
+								begin 
+									xout <= 8'b0;
+									yout <= yout + 1;
+								end
+							else
+								begin
+									colourOut <= 3'b0; //set to all black
+									xout <= xout + 1;
+									address = 6'b0;
+								end
+						end
+			end
+			
+		else if (screenCleared && ~drawEn) //draws in default rocket
+			begin
+					if (xout < xStart + 8'd10 && yout < yStart + 7'd9) //check that xin is orig. !!
+						begin
+						if (xout == xStart + 8'd10)
+							begin
+								xout <= xStart; //reset to original
+								yout <= yout + 1;
+								colourOut <= shipColour;
+								address <= address + 1;
+								drewHomeBase <= 1'b0;	
+							end
+						else
+							begin
+								xout <= xout + 1;
+								colourOut <= shipColour;
+								address <= address + 1; 
+								drewHomeBase <= 1'b0;	
+							end
+						end
+					else
+						begin
+							drewHomeBase <= 1'b1;	
+							address <= 7'b0;
+						end
+			end
+		
+		if (drawEn && screenCleared) 
+			begin
+			//clear the original rocket
+			if (xout < xorig + 8'd10 && yout < yorig + 7'd9) //check that xin is orig. !!
+						begin
+						if (xout == xorig + 8'd10)
+							begin
+								xout <= xorig; //reset to original
+								yout <= yout + 1;
+								colourOut <= 3'b0;	
+							end
+						else
+							begin
+								xout <= xout + 1;
+								colourOut <= 3'b0;	
+							end
+						end
+			//else rocketCleared = 1'b1;
+
+			if (leftEn)
+				begin
+					xorig <= xorig - 5;
+					xout <= xorig;
+					if (xout < xorig + 8'd10 && yout < yorig + 7'd9) //check that xin is orig. !!
+						begin
+						if (xout == xorig + 8'd10)
+							begin
+								xout <= xorig; //reset to original position
+								yout <= yout + 1;
+								colourOut <= shipColour;
+								address <= address + 1;	
+							end
+						else
+							begin
+								xout <= xout + 1;
+								colourOut <= shipColour;
+								address <= address + 1; 
+							end
+						end
+					else
+						begin
+							address <= 7'b0;
+						end
+				end
+			else if (rightEn)
+				begin
+					xorig <= xorig + 5;
+					xout <= xorig;
+					if (xout < xorig + 8'd10 && yout < yorig + 7'd9) //check that xin is orig. !!
+						begin
+						if (xout == xorig + 8'd10)
+							begin
+								xout <= xorig; //reset to original position
+								yout <= yout + 1;
+								colourOut <= shipColour;
+								address <= address + 1;
+							end
+						else
+							begin
+								xout <= xout + 1;
+								colourOut <= shipColour;
+								address <= address + 1; 
+							end
+						end
+					else
+						begin
+							address <= 7'b0;
+						end
+				end
+			end
+	end
+						
+endmodule
+
+
+module controlpath(clk,
+							start,
+							command_left,//from key
+							command_right, //from key
+							reset,  //from switch
+							screenCleared,
+							screenClearEn,
+							drawEn,
+							drewHomebase,
+							leftEn,
+							rightEn);
+							
+	input clk, start, command_left, command_right, reset, screenCleared, drewHomebase;
+	output reg leftEn, rightEn, screenClearEn, drawEn;
+
+	reg [2:0] current_state, next_state;
+							
+	localparam S_TITLE_PAGE = 4'd0, 
+				  TITLE_WAIT = 4'd1,
+				  S_CLEAR = 4'd2,
+				  S_HOMEBASE = 4'd3,
+				  S_COMMAND = 4'd4,
+				  COMMAND_WAIT = 4'd5,
+				  S_MOVE_LEFT = 4'd6,
+				  S_MOVE_RIGHT = 4'd7;
+	
+	//states for rocket control
+	// COMMAND ready to take in a signal, MOVES will send out signals to the VGA Datapath
+	always@(*)
+	begin: state_table
+		case (current_state)
+						S_TITLE_PAGE: next_state = start ? TITLE_WAIT : S_TITLE_PAGE;
+						TITLE_WAIT: next_state = start ? S_CLEAR : TITLE_WAIT;
+						
+						S_CLEAR: next_state = screenCleared ? S_HOMEBASE : S_CLEAR;
+						
+						S_HOMEBASE: next_state = drewHomebase ? S_COMMAND : S_HOMEBASE;
+						
+						S_COMMAND: begin
+								case (command_left)
+										1'b0: begin next_state = S_COMMAND;
+										
+												case(command_right)
+											
+												1'b0:next_state = S_COMMAND;
+												1'b1:next_state = S_MOVE_RIGHT;
+											
+												endcase
+												end
+										
+										1'b1: next_state = S_MOVE_LEFT;
+								 endcase
+						end
+						S_MOVE_LEFT:next_state = S_COMMAND;
+						S_MOVE_RIGHT: next_state = S_COMMAND;
+						
+			default: next_state = S_HOMEBASE;
+		endcase
+	end
+		
+		
+	 always @(*)
+    begin: enable_signals
+		screenClearEn = 1'b0;
+		leftEn = 1'b0;
+		rightEn = 1'b0;
+      drawEn = 1'b0;
+	
+		case (current_state)
+				S_CLEAR: screenClearEn = 1'b1;
+				S_COMMAND: drawEn = 1'b1;
+				S_MOVE_RIGHT:
+					begin 
+						rightEn = 1'b1;
+						drawEn = 1'b1;
+					end
+				S_MOVE_LEFT:
+					begin 
+						leftEn = 1'b1;
+						drawEn = 1'b1;
+					end
+								
+		endcase			
+	end
+										
+	always @ (posedge clk)
+	begin: reset_conditions
+	
+		if(reset == 1'b1) 
+			begin
+			current_state = S_TITLE_PAGE;
+			end
+			
+			else
+			begin
+			current_state <= next_state;
+			
+			end
+	end
+	
+endmodule
+		
+
+								
+
+//module readRocket (input clk, output [3:0] colour);
+//	wire [6:0] address = 6'b0;
+//	for (int i = 0; i < 110; i = i + 1)
+//	begin
+//		mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(colour));
+//	end
+//endmodule
+
