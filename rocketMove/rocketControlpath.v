@@ -5,12 +5,13 @@ module RocketControl(clk,
 							reset,  //from switch
 							screenCleared,
 							drewHomebase,
-							moveLeft,
-							moveRight
-							idle);
+		     					screenClearEn,
+							leftEn,
+							rightEn
+							draw);
 							
-	input clk, start, go_left, go_right, reset screenCleared, drewHomebase;
-	output reg moveLeft, moveRight idle;
+	input clk, start, command_left, command_right, reset screenCleared, drewHomebase;
+	output reg leftEn, rightEn, screenClearEn, drawEn ;
 							
 	localparam S_TITLE_PAGE = 8'b0 
 				  TITLE_WAIT = 8'b1
@@ -47,25 +48,26 @@ module RocketControl(clk,
 										1'b1: next_state = S_MOVE_LEFT;
 								 endcase
 						end
-						S_MOVE_LEFT:next_state = S_COMMAND;
-						S_MOVE_RIGHT: next_state = S_COMMAND;
+						S_MOVE_LEFT:next_state = S_HOMEBASE;
+						S_MOVE_RIGHT: next_state = S_HOMEBASE;
 						
-		default: next_state = S_COMMAND;
+		default: next_state = S_HOMEBASE;
 		endcase
 		end
 		
 		
 	 always @(*)
     begin: enable_signals
-		screenClearEnable = 1'b0;
-		left = 1'b0;
-		right = 1'b0;
-		idle = 1'b0;
+		screenClearEn = 1'b0;
+		leftEn = 1'b0;
+		rightEn = 1'b0;
+	    	drawEn = 1'b0;
 		
 		case (current_state)
-				S_CLEAR = screenClearEnable = 1'b1;
-				S_MOVE_RIGHT: right = 1'b1;
-				S_MOVE_LEFT: left = 1'b1;
+				S_CLEAR: screenClearEn = 1'b1;
+				S_COMMAND: drawEn = 1'b1; 
+				S_MOVE_RIGHT: rightEn = 1'b1;
+				S_MOVE_LEFT: leftEn = 1'b1;
 								
 		endcase			
 	end
