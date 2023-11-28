@@ -262,7 +262,7 @@ module controlpath(clk,
 	input clk, start, command_left, command_right, reset, screenCleared, drewHomebase;
 	output reg leftEn, rightEn, screenClearEn, drawEn;
 
-	reg [2:0] current_state, next_state;
+	reg [3:0] current_state, next_state;
 							
 	localparam S_TITLE_PAGE = 4'd0, 
 				  TITLE_WAIT = 4'd1,
