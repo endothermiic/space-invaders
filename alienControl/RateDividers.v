@@ -13,9 +13,9 @@ module aliensFalling #(parameter CLOCK_FREQUENCY = 50000000)
 endmodule
 
 
-module shotRising #(parameter CLOCK_FREQUENCY = 50000000)
+module shotRising #(parameter CLOCK_FREQUENCY = 50000000);
 
-
+endmodule
 
 						 
 /*--------------------------------------------------------------------------------------------------------*/						
@@ -97,8 +97,6 @@ endmodule
 endmodule
 
 /*--------------------------------------------------------------------------------------------------------*/
-///WOULD NEED A DISPLAY COUNTER FOR THE SHOT
-endmodule
 
 /*--------------------------------------------------------------------------------------------------------*/
 ///WOULD NEED A DISPLAY COUNTER FOR THE SHOT
