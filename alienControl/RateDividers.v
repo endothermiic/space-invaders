@@ -1,4 +1,4 @@
-
+//NEED TO TEST
 module aliensFalling #(parameter CLOCK_FREQUENCY = 50000000)
 							(input clk, input reset, input drewHomeBase, //drew homebase is our Enable for the rate divider 
 							output drawEn, //drawEn set to 1 as soon as drewHomebase if ==1 and pass to the VGA 
@@ -27,9 +27,16 @@ module RateDivider #(parameter CLOCK_FREQUENCY = 50000000)
 	reg [31:0] count;
 
 	always @(posedge(drewHomeBase), posedge (clk))
-		begin		
+		begin	
 		
-			if (Enable)
+		if (drewHomeBase)	
+		
+				case (Speed)
+				2'b10:  count = (CLOCK_FREQUENCY / 3)-1; //shot speed (3 pixels per second)
+				2'b11:  count = (CLOCK_FREQUENCY * 4)-1; //aliens falling (once every 4 seconds)
+				endcase
+				
+			else if (Enable)
 			
 			case (Speed)
 			
@@ -87,6 +94,10 @@ endmodule
 		end
 	assign CounterValue = display;
 	
+endmodule
+
+/*--------------------------------------------------------------------------------------------------------*/
+///WOULD NEED A DISPLAY COUNTER FOR THE SHOT
 endmodule
 
 /*--------------------------------------------------------------------------------------------------------*/
