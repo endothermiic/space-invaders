@@ -1,0 +1,56 @@
+module rocket(reset, clk, start, left, right, shotFired, xin, yin, colourin, ox, oDone);
+   parameter X_SCREEN_PIXELS = 8'd160;
+   parameter Y_SCREEN_PIXELS = 7'd120;
+
+   input wire reset;                             
+   input wire [2:0] iColour;
+   input wire [6:0] iXY_Coord;
+   input wire 	    iClock;
+   output wire [7:0] oX;         // VGA pixel coordinates
+   output wire [6:0] oY;
+
+   output wire [2:0] oColour;     // VGA pixel colour (0-7)
+   output wire 	     oPlot;       // Pixel draw enable
+   output wire       oDone;       // goes high when finished drawing frame or cleared frame
+
+	
+	//additional wires for outputs of control/datapath
+	wire [1:0] xCount; 
+	wire [1:0] yCount; 
+	wire [3:0] fourbCounter;
+	wire yEn, colourEn, plotEn, blackEn;
+	
+	//writeEn assigned in control path
+	controlpath c0(.clk(iClock), 
+						.resetn(iResetn), 
+						.load(iLoadX), 
+						.clear(iBlack), 
+						.plot(iPlotBox), 
+						.fourbCounter(fourbCounter), 
+						.xCount(xCount), 
+						.yCount(yCount), 
+						.yEn(yEn), 
+						.colourEn(colourEn), 
+						.writeEn(oPlot),
+						.plotEn(plotEn), 
+						.blackEn(blackEn));
+
+	//x, y, colour assigned in data path 
+	datapath d0(.clk(iClock), 
+					.resetn(iResetn), 
+					.xEn(iLoadX), 
+					.yEn(iPlotBox), 
+					.colourEn(iPlotBox), 
+					.plotEn(oPlot), //draw oColour at specified coordinate
+					.blackEn(iBlack), 
+					.oDone(oDone),
+					.dataIn(iXY_Coord),
+					.colourIn(iColour), 
+					.fourbCounter(fourbCounter), 
+					.xCount(xCount), 
+					.yCount(yCount),
+					.x(oX), 
+					.y(oY), 
+					.colour(oColour));
+
+endmodule // part2

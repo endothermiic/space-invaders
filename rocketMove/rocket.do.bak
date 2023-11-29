@@ -1,0 +1,56 @@
+vlib work 
+vlog rocket.v
+vsim -L altera_mf_ver rocket
+#vsim -L work rocket
+log  /*
+add wave {/*}
+
+add wave -position insertpoint  \
+sim:/rocket/c0/current_state \
+sim:/rocket/c0/next_state
+
+add wave -position insertpoint  \
+sim:/rocket/xStart
+add wave -position insertpoint  \
+sim:/rocket/yStart
+add wave -position insertpoint  \
+sim:/rocket/d0/rocketCleared
+
+add wave -position end  sim:/rocket/d0/xorig
+add wave -position end  sim:/rocket/d0/yorig
+
+
+force {clk} 0 ns, 1 {5ns} -r 10ns
+
+#RESET
+force reset 1'b1;
+run 10 ns;
+force start 1'b0;
+force left  1'b0;
+force right 1'b0;
+run 10ns
+
+#move 
+force reset 1'b0;
+force start 1'b1;
+run 250000 ns
+
+#move rocket
+force left 1'b1;
+run 10 ns
+
+force left 1'b0;
+
+run 4500 ns
+#force iXY_Coord 7'd7;
+#force iColour 3'b101;
+#force iPlotBox 1'b1;
+#run 100 ns
+#force iPlotBox 1'b0;
+#run 1000 ns
+
+#clear
+#force iBlack 1'b1;
+#run 100 ns
+#force iBlack 1'b0;
+#run 1000 ns

@@ -1,0 +1,7 @@
+module onealien#(parameter CLOCK_FREQUENCY = 50000000)
+					(input clk, reset, writeEn, output [31:0] dataOut);
+
+
+	
+
+endmodule
