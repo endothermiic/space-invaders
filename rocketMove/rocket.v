@@ -15,18 +15,6 @@ module rocket(reset, clk, start, left, right, screenCleared, drewHomeBase, xout,
    output  screenCleared, drewHomeBase;
 	wire leftEn, rightEn, screenClearEn, leftMoved, rightMoved;
 
-	
-	//TODO: leftMoved rightMoved
-	
-	//screencleared, rocketcleared assigned in control path
-//	controlpath c0(.clk(clk), 
-//						.reset(reset), //clear all 
-//						.moveLeft(left),
-//						.start(start), //put to centre of screen - if start high, makes plot high
-//						.moveRight(right),
-//						.screenCleared(screenCleared),
-//						.rocketCleared(rocketCleared));
-
 	//xout, yout, colourOut assigned in data path 
 	datapath d0(.clk(clk), 
 						.reset(reset), 
@@ -124,8 +112,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 			end
 			
 		else if (screenCleared && ~leftEn && ~rightEn && ~drewHomeBase) //draws in default rocket
-			begin
-			//if xout < (xStart + 8'd10) && 
+			begin 
 					if (yout < (yStart + 7'd9)) //check that xin is orig. !!
 						begin
 						if (xout == xStart + 8'd10)
@@ -241,13 +228,13 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 								address <= address + 1; 
 							end
 					end
-				elses
+				else
 						begin
 							address <= 7'b0;
 							rightMoved <= 1'b1;
 						end
 			end
-			ends
+			end
 		else
 			begin 
 				leftMoved <= 1'b0;
@@ -367,13 +354,5 @@ module controlpath(clk,
 endmodule
 		
 
-								
 
-//module readRocket (input clk, output [3:0] colour);
-//	wire [6:0] address = 6'b0;
-//	for (int i = 0; i < 110; i = i + 1)
-//	begin
-//		mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(colour));
-//	end
-//endmodule
 
