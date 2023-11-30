@@ -77,7 +77,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 							
 	always@(posedge clk)
 	begin
-		if (reset) //active hight - TODO / fix
+		if (reset) //active high - TODO / fix
 			begin
 				xout <= 8'b0; 
 				yout <= 7'b0;
@@ -177,24 +177,24 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 							drewHomeBase <= 1'b0;
 						end
 						
-				//rocketCleared
-				else if (yout < yorig + 7'd10) //CHANGE TO ACCOUNT FOR 114 EXTRA CYCLE IN yout?
-						begin
-						if (xout == xorig + 8'd10)
+					//rocketCleared
+					else if (yout < yorig + 7'd10) //CHANGE TO ACCOUNT FOR 114 EXTRA CYCLE IN yout?
 							begin
-								xout <= xorig; //reset to original position
-								yout <= yout + 1;
-								colourOut <= shipColour;
-								address <= address + 1;	
+							if (xout == xorig + 8'd10)
+								begin
+									xout <= xorig; //reset to original position
+									yout <= yout + 1;
+									colourOut <= shipColour;
+									address <= address + 1;	
+								end
+							else
+								begin
+									xout <= xout + 1;
+									colourOut <= shipColour;
+									address <= address + 1; 
+								end
 							end
-						else
-							begin
-								xout <= xout + 1;
-								colourOut <= shipColour;
-								address <= address + 1; 
-							end
-						end
-					
+						
 					
 					else
 						begin
@@ -205,31 +205,31 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 				
 				else if (rightEn)
 				begin
-				if (!rightMovedCoord)
-					begin
-						xorig <= xorig + 5;
-						xout <= xorig;
-						yout <= yorig;
-						rightMovedCoord <= 1'b1;
-						drewHomeBase <= 1'b0;
-					end
-				else if (yout < yorig + 7'd10) //check that xin is orig. !!
-					begin
-						if (xout == xorig + 8'd10)
+					if (!rightMovedCoord)
+						begin
+							xorig <= xorig + 5;
+							xout <= xorig;
+							yout <= yorig;
+							rightMovedCoord <= 1'b1;
+							drewHomeBase <= 1'b0;
+						end
+					else if (yout < yorig + 7'd10) //check that xin is orig. !!
 							begin
-								xout <= xorig; //reset to original position
-								yout <= yout + 1;
-								colourOut <= shipColour;
-								address <= address + 1;
+							if (xout == xorig + 8'd10)
+								begin
+									xout <= xorig; //reset to original position
+									yout <= yout + 1;
+									colourOut <= shipColour;
+									address <= address + 1;
+								end
+							else
+								begin
+									xout <= xout + 1;
+									colourOut <= shipColour;
+									address <= address + 1; 
+								end
 							end
-						else
-							begin
-								xout <= xout + 1;
-								colourOut <= shipColour;
-								address <= address + 1; 
-							end
-					end
-				else
+					else
 						begin
 							address <= 7'b0;
 							rightMoved <= 1'b1;
@@ -269,22 +269,22 @@ module controlpath(clk,
 	reg [2:0] current_state, next_state;
 							
 	localparam S_TITLE_PAGE = 4'd0, 
-				  TITLE_WAIT = 4'd1,
-				  S_CLEAR = 4'd2,
-				  S_HOMEBASE = 4'd3,
-				  S_COMMAND = 4'd4,
-				  S_MOVE_LEFT = 4'd6,
+//				  TITLE_WAIT = 4'd1,
+				  S_CLEAR = 4'd1,
+				  S_HOMEBASE = 4'd2,
+				  S_COMMAND = 4'd3,
+				  S_MOVE_LEFT = 4'd4,
 				  S_LEFT_WAIT = 4'd5,
-				  S_MOVE_RIGHT = 4'd7,
-				  S_RIGHT_WAIT = 4'd8;
+				  S_MOVE_RIGHT = 4'd6,
+				  S_RIGHT_WAIT = 4'd7;
 	
 	//states for rocket control
 	// COMMAND ready to take in a signal, MOVES will send out signals to the VGA Datapath
 	always@(*)
 	begin: state_table
 		case (current_state)
-						S_TITLE_PAGE: next_state = start ? TITLE_WAIT : S_TITLE_PAGE;
-						TITLE_WAIT: next_state = start ? S_CLEAR : TITLE_WAIT;
+						S_TITLE_PAGE: next_state = start ? S_CLEAR : S_TITLE_PAGE;
+//						TITLE_WAIT: next_state = start ? S_CLEAR : TITLE_WAIT;
 						
 						S_CLEAR: next_state = screenCleared ? S_HOMEBASE : S_CLEAR;
 						
@@ -298,6 +298,7 @@ module controlpath(clk,
 						end
 						S_LEFT_WAIT: next_state = leftMoved ? S_COMMAND : S_LEFT_WAIT;
 						S_RIGHT_WAIT: next_state = rightMoved ? S_COMMAND : S_RIGHT_WAIT;
+						
 						S_MOVE_LEFT: next_state = leftMoved ? S_COMMAND : S_LEFT_WAIT;
 						S_MOVE_RIGHT: next_state = rightMoved ? S_COMMAND : S_RIGHT_WAIT;
 						
@@ -311,12 +312,12 @@ module controlpath(clk,
 		screenClearEn = 1'b0;
 		leftEn = 1'b0;
 		rightEn = 1'b0;
-      drawEn = 1'b0;
+		drawEn = 1'b0;
 	
 		case (current_state)
 				S_CLEAR: begin drawEn = 1'b1; screenClearEn = 1'b1; end
 				S_TITLE_PAGE: drawEn = 1'b1;
-				TITLE_WAIT: drawEn = 1'b1;
+//				TITLE_WAIT: drawEn = 1'b1;
 				S_COMMAND: drawEn = 1'b0;
 				S_HOMEBASE: drawEn = 1'b1;
 				S_MOVE_RIGHT:
