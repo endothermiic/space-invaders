@@ -1,7 +1,7 @@
-module shots(clk, reset, xin, bulletX, bulletY, colour, drawEn);
+module shots(clk, reset, keyPressed, xin, bulletX, bulletY, colour, drawEn);
 //xin comes from output of rocket.v - xout from rocket.v 
 
-input clk, reset;
+input clk, reset, keyPressed;
 wire updatePosEn, bulletActive, waitEn, topReached, userIntakeEn;
 wire collidedWithAlien = 1'b0; //remove once aliens modulr working
 input [7:0] xin;
@@ -31,7 +31,7 @@ module datapathshot(clk, reset, updatePosEn, waitEn, xin, bulletX, bulletY, topR
 	
 	always @(posedge clk)
 	begin
-		if (!reset) 
+		if (~reset) 
 			begin
 				bulletX <= 8'd0; 
 				bulletY <= 7'd105;
@@ -101,7 +101,7 @@ always @(*)
 		userIntakeEn <= 1'b0;
 		updatePosEn <= 1'b0;
 		waitEn <= 1'b0;
-	    drawEn <= 1'b0;
+	   drawEn <= 1'b0;
 		
 	case(current_state)
 		INTAKE: userIntakeEn <= 1'b1;
@@ -114,9 +114,9 @@ end
 //state transitions
 always@(posedge clk)
 	begin: state_transition
-	if (!reset)
+	if (~reset)
 		begin
-			current_state = INTAKE;
+			current_state <= INTAKE;
 		end
 			
 		else current_state <= next_state;
