@@ -59,10 +59,10 @@ endmodule
 
 
 
-module controlpathshot (clk, keyPressed, topReached, collidedWithAlien, updatedBulletPosition, userIntakeEn, updatePosEn, waitEn, drawEn);
+module controlpathshot (clk, keyPressed, topReached, collidedWithAlien, updatedBulletPosition, userIntakeEn, updatePosEn, waitEn, drawEn, attackLaunched);
 
 	input clk, keyPressed, topReached, collidedWithAlien, updatedBulletPosition;
-	output reg userIntakeEn, updatePosEn, waitEn, drawEn;
+	output reg userIntakeEn, updatePosEn, waitEn, drawEn, attackLaunched;
 	
 	reg [2:0] current_state, next_state;
 	
@@ -97,12 +97,13 @@ always @(*)
 		userIntakeEn <= 1'b0;
 		updatePosEn <= 1'b0;
 		waitEn <= 1'b0;
-	   drawEn <= 1'b0;
+	   	drawEn <= 1'b0;
+	   	attackLaunched <= 1'b0;
 		
 	case(current_state)
 		INTAKE: userIntakeEn <= 1'b1;
-		UPDATE_POSITION: begin updatePosEn <= 1'b1; drawEn <= 1'b1; end
-		WAIT: waitEn <= 1'b1;
+		UPDATE_POSITION: begin updatePosEn <= 1'b1; drawEn <= 1'b1; attackLaunched <= 1'b0; end
+		WAIT: begin waitEn <= 1'b1; attackLaunched <= 1'b1; end
 	endcase
 		
 end
