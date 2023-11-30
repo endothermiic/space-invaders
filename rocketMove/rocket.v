@@ -113,7 +113,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 			
 		else if (screenCleared && ~leftEn && ~rightEn && ~drewHomeBase) //draws in default rocket
 			begin 
-					if (yout < (yStart + 7'd9)) //check that xin is orig. !!
+					if (yout < (yStart + 7'd10)) //our rocket is 11 (x) by 10 (y) - y increments from 0 to 9
 						begin
 						if (xout == xStart + 8'd10)
 							begin
@@ -143,7 +143,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 		else if (screenCleared && (leftEn || rightEn) && ~rocketCleared)
 			begin
 			//clear the original rocket
-			if (yout < yorig + 7'd9) //check that xin is orig. !!
+			if (yout < yorig + 7'd10) //check that xin is orig. !!
 				begin
 						if (xout == xorig + 8'd10)
 							begin
@@ -171,7 +171,8 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 					if (!leftMovedCoord)
 						begin
 							xorig <= xorig - 5;
-							xout <= xorig;
+							xout <= xout - 5;
+							//xout <= xorig;
 							yout <= yorig;
 							leftMovedCoord <= 1'b1;
 							drewHomeBase <= 1'b0;
@@ -208,7 +209,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 					if (!rightMovedCoord)
 						begin
 							xorig <= xorig + 5;
-							xout <= xorig;
+							xout <= xout + 5;
 							yout <= yorig;
 							rightMovedCoord <= 1'b1;
 							drewHomeBase <= 1'b0;
@@ -358,14 +359,4 @@ module controlpath(clk,
 	end	
 endmodule
 		
-
-								
-
-//module readRocket (input clk, output [3:0] colour);
-//	wire [6:0] address = 6'b0;
-//	for (int i = 0; i < 110; i = i + 1)
-//	begin
-//		mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(colour));
-//	end
-//endmodule
 
