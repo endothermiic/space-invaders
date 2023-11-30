@@ -10,7 +10,7 @@ module rocket(reset, clk, start, left, right, screenCleared, drewHomeBase, xout,
 	
    output  [7:0] xout;  
 	output  [6:0] yout;
-	output  [2:0] colourOut;// VGA pixel coordinates
+	output  [2:0] colourOut; // VGA pixel coordinates
 	output drawEn;
    output  screenCleared, drewHomeBase;
 	wire leftEn, rightEn, screenClearEn, leftMoved, rightMoved;
@@ -77,7 +77,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 							
 	always@(posedge clk)
 	begin
-		if (reset) //active high - TODO / fix
+		if (!reset) //active low
 			begin
 				xout <= 8'b0; 
 				yout <= 7'b0;
@@ -347,7 +347,7 @@ module controlpath(clk,
 	always @ (posedge clk)
 	begin: reset_conditions
 	
-		if(reset == 1'b1) 
+		if(reset == 1'b0) 
 			begin
 				current_state = S_TITLE_PAGE;
 			end
@@ -359,4 +359,14 @@ module controlpath(clk,
 	end	
 endmodule
 		
+
+								
+
+//module readRocket (input clk, output [3:0] colour);
+//	wire [6:0] address = 6'b0;
+//	for (int i = 0; i < 110; i = i + 1)
+//	begin
+//		mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(colour));
+//	end
+//endmodule
 
