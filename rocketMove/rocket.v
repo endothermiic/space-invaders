@@ -154,12 +154,13 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 						else
 							begin
 								xout <= xout + 1;
-								colourOut <= 3'b0;	
+								colourOut <= 3'b0;
 							end
 				end
 			else 
 				begin
-					rocketCleared = 1'b1;
+					rocketCleared <= 1'b1;
+					yout <= yorig;
 					drewHomeBase <= 1'b0;
 				end
 			end
@@ -176,8 +177,8 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 							drewHomeBase <= 1'b0;
 						end
 						
-				
-					else if (yout < yorig + 7'd10) //CHANGE TO ACCOUNT FOR 114 EXTRA CYCLE IN yout?
+				//rocketCleared
+				else if (yout < yorig + 7'd10) //CHANGE TO ACCOUNT FOR 114 EXTRA CYCLE IN yout?
 						begin
 						if (xout == xorig + 8'd10)
 							begin
@@ -239,6 +240,9 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 			begin 
 				leftMoved <= 1'b0;
 				rightMoved <= 1'b0;
+				leftMovedCoord <= 1'b0;
+				rightMovedCoord <= 1'b0;
+				rocketCleared <= 1'b0;
 			end
 	end
 						
@@ -354,5 +358,13 @@ module controlpath(clk,
 endmodule
 		
 
+								
 
+//module readRocket (input clk, output [3:0] colour);
+//	wire [6:0] address = 6'b0;
+//	for (int i = 0; i < 110; i = i + 1)
+//	begin
+//		mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(colour));
+//	end
+//endmodule
 
