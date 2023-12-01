@@ -327,12 +327,12 @@ module controlpath(clk,
 							output );
 
 					begin 
-						RateDivider right #(CLOCK_FREQUENCY = 50) (clk, reset, 2'b00, rightEn); //make rightEn output at nessesary frequency
+						RateDivider right #(.CLOCK_FREQUENCY(CLOCK_FREQUENCY)) (clk, reset, 2'b00, rightEn); //make rightEn output at nessesary frequency
 						drawEn = 1'b1;
 					end
 				S_MOVE_LEFT:
 					begin 
-						RateDivider right #(CLOCK_FREQUENCY = 50) (clk, reset, 2'b00, leftEn);
+						RateDivider right #(.CLOCK_FREQUENCY(CLOCK_FREQUENCY)) (clk, reset, 2'b00, leftEn);
 						drawEn = 1'b1;
 					end
 				S_RIGHT_WAIT: 
