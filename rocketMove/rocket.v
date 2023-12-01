@@ -321,14 +321,18 @@ module controlpath(clk,
 //				TITLE_WAIT: drawEn = 1'b1;
 				S_COMMAND: drawEn = 1'b0;
 				S_HOMEBASE: drawEn = 1'b1;
-				S_MOVE_RIGHT:
+				S_MOVE_RIGHT: 	
+					// module RateDivider #(parameter CLOCK_FREQUENCY =
+							(input clk, input reset, input [1:0] Speed,
+							output );
+
 					begin 
-						rightEn = 1'b1;
+						RateDivider right #(CLOCK_FREQUENCY = 50) (clk, reset, 2'b00, rightEn); //make rightEn output at nessesary frequency
 						drawEn = 1'b1;
 					end
 				S_MOVE_LEFT:
 					begin 
-						leftEn = 1'b1;
+						RateDivider right #(CLOCK_FREQUENCY = 50) (clk, reset, 2'b00, leftEn);
 						drawEn = 1'b1;
 					end
 				S_RIGHT_WAIT: 
