@@ -1,9 +1,10 @@
 //NEED TO HOOK UP ONE MORE STATE FOR DEFAULT DRAW
 //POTENTIALLY - add score count check stages after every kill. yeah... prob neeed that
 
-module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
+module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
+									(clk, reset, shotXcoord, shotYcoord, gameOver,
 									youWin, scoreCount, 
-									kill1, kill2, kill3, kill4, kill5, moveDown
+									kill1, kill2, kill3, kill4, kill5, moveDown,
 									clearedShift, cleared1, cleared2, cleared3, cleared4, cleared5,
 									alienTopY, alienTopX, alienBottomX, alienBottomY); //needs to take care of the collidedWithAlien for the shots control
 	//FUNCTIONALITY:
@@ -33,7 +34,7 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 	
 	
 	//instantiate rate Divider for Alien drop
-	rate (.CLOCK_FREQUENCY(50000000)) alienDrop (.clk(clk), .reset(reset), .Speed(2'b11), .Enable(drop));
+	rate #(.CLOCK_FREQUENCY(CLOCK_FREQUENCY)) alienDrop (.clk(clk), .reset(reset), .Speed(2'b11), .Enable(drop));
 	
 	
 	
@@ -75,30 +76,27 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 										end
 								
 								else if ((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap)) && 
-											(shotXcoord <= (startX + width + width + gap))
+											(shotXcoord <= (startX + width + width + gap)))
 										begin
 										
 										next_state = KILL_TWO;
 										
-										end 
+										
 								
-								else if ((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap) && 
+								end else if ((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap) && 
 											(shotXcoord <= (startX + width + gap+ width + gap + width)) 
 										begin
 										
 										next_state = KILL_THREE;
 										
-										end
-								
-								else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap) && 
-											(shotXcoord <= (startX + width + gap+ width + gap + width +gap +width)) 
+								end else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap) && 
+											(shotXcoord <= (startX + width + gap+ width + gap + width +gap +width)))
 										begin
 										
 										next_state = KILL_FOUR;
 										
-										end
-								
-								else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap + width +gap) && 
+													
+								end else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap + width +gap) && 
 											(shotXcoord <= (startX + width + gap+ width + gap + width +gap + width +gap +width)) 
 										begin
 											
