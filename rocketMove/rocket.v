@@ -1,11 +1,10 @@
-//`include "mothership.v"
+`include "gameovernew.v"
 
-module rocket(reset, clk, start, left, right, screenCleared, drewHomeBase, xout, yout, colourOut, drawEn);
+module rocket (reset, clk, start, left, right, screenCleared, drewHomeBase, xout, yout, colourOut, drawEn);
    parameter X_SCREEN_PIXELS = 8'd160;
    parameter Y_SCREEN_PIXELS = 7'd120;
 	parameter xStart = 8'd73; //start of 11x10 square
 	parameter yStart = 7'd105;
-
    input reset, clk, start, left, right;
 	
    output  [7:0] xout;  
@@ -13,7 +12,7 @@ module rocket(reset, clk, start, left, right, screenCleared, drewHomeBase, xout,
 	output  [2:0] colourOut; // VGA pixel coordinates
 	output drawEn;
    output  screenCleared, drewHomeBase;
-	wire leftEn, rightEn, screenClearEn, leftMoved, rightMoved;
+	wire leftEn, rightEn, screenClearEn, leftMoved, rightMoved, drewGameOver, hitEdge;
 
 	//xout, yout, colourOut assigned in data path 
 	datapath d0(.clk(clk), 
@@ -26,6 +25,8 @@ module rocket(reset, clk, start, left, right, screenCleared, drewHomeBase, xout,
 						.rightMoved(rightMoved),
 						.drawEn(drawEn),
 						.drewHomeBase(drewHomeBase),
+						.drewGameOver(drewGameOver),
+						.hitEdge(hitEdge),
 						.xout(xout), 
 						.yout(yout), 
 						.colourOut(colourOut));
@@ -33,6 +34,8 @@ module rocket(reset, clk, start, left, right, screenCleared, drewHomeBase, xout,
 						
 	controlpath c0 (.clk(clk), 
 						.start(start), 
+						.drewGameOver(drewGameOver),
+						.hitEdge(hitEdge),
 						.command_left(left), 
 						.command_right(right), 
 						.reset(reset),
@@ -55,6 +58,8 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 						output reg drewHomeBase, //changed
 						output reg leftMoved,
 						output reg rightMoved,
+						output reg hitEdge, 
+						output reg drewGameOver,
 						output reg [7:0] xout, 
 						output reg [6:0] yout, 
 						output reg [2:0] colourOut);					
@@ -67,10 +72,13 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 	reg [6:0] yorig = yStart;
 	
 	reg [6:0] address = 6'b0;
+    reg [14:0]addressFS = 15'b0;
+
 	wire [2:0]shipColour;
+	wire [2:0]gameOverColour;
 	
-	mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(shipColour));
-	
+	mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(shipColour)); //has rocket mif data
+   gameovernew g0 (.clock(clk), .address(addressFS), .q(gameOverColour)); //has game over mif data (fullscreen)
 	
 	reg rocketCleared = 1'b0, leftMovedCoord = 1'b0, rightMovedCoord = 1'b0;
 	
@@ -86,6 +94,8 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 				drewHomeBase <= 1'b0;
 				leftMoved <= 1'b0; 
 				rightMoved <= 1'b0;
+				hitEdge <= 1'b0; 
+				drewGameOver <= 1'b0;
 			end
 		if (screenClearEn) //clears entire screen
 			begin 
@@ -177,8 +187,39 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 							leftMovedCoord <= 1'b1;
 							drewHomeBase <= 1'b0;
 						end
+					
+					if (xout > X_SCREEN_PIXELS - 1 || xout < 0)
+						begin
+							hitEdge <= 1'b1;
 						
-					//rocketCleared
+                        //draw gameOver screen
+                                begin 
+                                if (xout == X_SCREEN_PIXELS - 1 && yout == Y_SCREEN_PIXELS - 1) 
+                                    begin
+                                        xout <= xorig; 
+                                        yout <= yorig;
+                                        drewGameOver <= 1'b1;
+                                        addressFS <= 15'b0;
+                                    end
+                                else
+                                    begin
+                                        if (xout == 8'd159)
+                                            begin 
+                                                xout <= 8'b0;
+                                                yout <= yout + 1;
+                                                addressFS <= addressFS + 1;
+                                            end
+                                        else
+                                            begin
+                                                colourOut <= gameOverColour; 
+                                                xout <= xout + 1;
+                                                addressFS <= addressFS + 1;
+                                            end
+                                    end
+                            end
+						end
+					
+					//redraw rockt to left
 					else if (yout < yorig + 7'd10) //CHANGE TO ACCOUNT FOR 114 EXTRA CYCLE IN yout?
 							begin
 							if (xout == xorig + 8'd10)
@@ -252,6 +293,8 @@ endmodule
 
 module controlpath(clk,
 							start,
+							drewGameOver,
+							hitEdge,
 							command_left,//from key
 							command_right, //from key
 							reset,  //from switch
@@ -264,20 +307,24 @@ module controlpath(clk,
 							leftMoved,
 							rightMoved);
 							
-	input clk, start, command_left, command_right, reset, screenCleared, drewHomebase, leftMoved, rightMoved;
+	input clk, start, drewGameOver, hitEdge, command_left, command_right, reset, screenCleared, drewHomebase, leftMoved, rightMoved;
 	output reg leftEn, rightEn, screenClearEn, drawEn;
 
 	reg [2:0] current_state, next_state;
+	
+	wire clickR, clickL;
+	rate   #(.CLOCK_FREQUENCY(5)) r (.clk(clk), .reset(reset), .Speed(2'b00), .Enable(clickR));
+	rate  #(.CLOCK_FREQUENCY(5)) l (.clk(clk), .reset(reset), .Speed(2'b00), .Enable(clickL));
 							
-	localparam S_TITLE_PAGE = 4'd0, 
-//				  TITLE_WAIT = 4'd1,
-				  S_CLEAR = 4'd1,
-				  S_HOMEBASE = 4'd2,
-				  S_COMMAND = 4'd3,
-				  S_MOVE_LEFT = 4'd4,
-				  S_LEFT_WAIT = 4'd5,
-				  S_MOVE_RIGHT = 4'd6,
-				  S_RIGHT_WAIT = 4'd7;
+	localparam S_TITLE_PAGE = 5'd0, 
+				  S_CLEAR = 5'd1,
+				  S_HOMEBASE = 5'd2,
+				  S_COMMAND = 5'd3,
+				  S_MOVE_LEFT = 5'd4,
+				  S_LEFT_WAIT = 5'd5,
+				  S_MOVE_RIGHT = 5'd6,
+				  S_RIGHT_WAIT = 5'd7,
+				  S_GAME_OVER = 5'd8;
 	
 	//states for rocket control
 	// COMMAND ready to take in a signal, MOVES will send out signals to the VGA Datapath
@@ -285,10 +332,9 @@ module controlpath(clk,
 	begin: state_table
 		case (current_state)
 						S_TITLE_PAGE: next_state = start ? S_CLEAR : S_TITLE_PAGE;
-//						TITLE_WAIT: next_state = start ? S_CLEAR : TITLE_WAIT;
 						
 						S_CLEAR: next_state = screenCleared ? S_HOMEBASE : S_CLEAR;
-						
+							
 						S_HOMEBASE: next_state = drewHomebase ? S_COMMAND : S_HOMEBASE;
 						
 						S_COMMAND: //wait for input state
@@ -297,11 +343,25 @@ module controlpath(clk,
 								else if (command_right) next_state = S_MOVE_RIGHT;
 								else next_state = S_COMMAND;
 						end
-						S_LEFT_WAIT: next_state = leftMoved ? S_COMMAND : S_LEFT_WAIT;
-						S_RIGHT_WAIT: next_state = rightMoved ? S_COMMAND : S_RIGHT_WAIT;
 						
-						S_MOVE_LEFT: next_state = leftMoved ? S_COMMAND : S_LEFT_WAIT;
-						S_MOVE_RIGHT: next_state = rightMoved ? S_COMMAND : S_RIGHT_WAIT;
+						
+						S_LEFT_WAIT: 
+                      begin 
+                                if (hitEdge) next_state = S_GAME_OVER;
+                                else if (clickL) next_state = S_COMMAND;
+                                else next_state = S_LEFT_WAIT;
+							end
+						S_RIGHT_WAIT:
+                      begin 
+                                if (hitEdge) next_state = S_GAME_OVER;
+                                else if (clickR) next_state = S_COMMAND;
+                                else next_state = S_LEFT_WAIT;
+							end
+    
+						S_MOVE_LEFT: next_state = leftMoved ? S_LEFT_WAIT: S_MOVE_LEFT;
+						S_MOVE_RIGHT: next_state = rightMoved ? S_RIGHT_WAIT : S_MOVE_RIGHT;
+						
+						S_GAME_OVER: next_state = drewGameOver ? S_GAME_OVER : S_TITLE_PAGE;
 						
 			default: next_state = S_HOMEBASE;
 		endcase
@@ -318,21 +378,16 @@ module controlpath(clk,
 		case (current_state)
 				S_CLEAR: begin drawEn = 1'b1; screenClearEn = 1'b1; end
 				S_TITLE_PAGE: drawEn = 1'b1;
-//				TITLE_WAIT: drawEn = 1'b1;
 				S_COMMAND: drawEn = 1'b0;
 				S_HOMEBASE: drawEn = 1'b1;
-				S_MOVE_RIGHT: 	
-					// module RateDivider #(parameter CLOCK_FREQUENCY =
-							(input clk, input reset, input [1:0] Speed,
-							output );
-
+				S_MOVE_RIGHT:
 					begin 
 						rightEn = 1'b1;
 						drawEn = 1'b1;
 					end
 				S_MOVE_LEFT:
 					begin 
-						rightEn = 1'b1;
+						leftEn = 1'b1;
 						drawEn = 1'b1;
 					end
 				S_RIGHT_WAIT: 
@@ -345,6 +400,7 @@ module controlpath(clk,
 						leftEn = 1'b1;
 						drawEn = 1'b1;
 					end
+				S_GAME_OVER: drawEn = 1'b1; 
 		endcase			
 	end
 										
@@ -362,15 +418,3 @@ module controlpath(clk,
 			end
 	end	
 endmodule
-		
-
-								
-
-//module readRocket (input clk, output [3:0] colour);
-//	wire [6:0] address = 6'b0;
-//	for (int i = 0; i < 110; i = i + 1)
-//	begin
-//		mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(colour));
-//	end
-//endmodule
-
