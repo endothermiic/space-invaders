@@ -17,7 +17,7 @@ reg yIncremented = 1'b0;
 
 reg [10:0] address = 11'b0;
 wire [2:0] aliensColour, gameOverColour, youWinColour;
-assign wire clearAny = clear1 || clear2 || clear3 || clear4 || clear 5;
+assign wire clearAny = clear1 || clear2 || clear3 || clear4 || clear5;
 reg startRow, clear1set, clear2set, clear3set, clear4set, clear5set;
 reg gameWon, gameDone;
 
