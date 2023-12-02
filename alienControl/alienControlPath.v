@@ -1,7 +1,7 @@
 //NEED TO HOOK UP ONE MORE STATE FOR DEFAULT DRAW
 //POTENTIALLY - add score count check stages after every kill. yeah... prob neeed that
 
-module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
+module alienTalentManager #(parameter CLOCK_FREQUENCY = 5)
 									(clk, reset, shotXcoord, shotYcoord, gameOver,
 									youWin, scoreCount, 
 									kill1, kill2, kill3, kill4, kill5, moveDown,
@@ -18,7 +18,7 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
 	output reg [7:0]  alienTopX, alienBottomX; 
 	output reg [6:0]  alienTopY, alienBottomY;
 	output reg [2:0] 	scoreCount;
-	output reg gameover, youWin, kill1, kill2, kill3, kill4, kill5, moveDown;
+	output reg gameOver, youWin, kill1, kill2, kill3, kill4, kill5, moveDown;
 	
 	parameter width = 8'd12;
 	parameter height = 7'd10;
@@ -30,7 +30,7 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
 	reg [3:0] current_state, next_state;
 	reg[5:0] dropCounter; // if goes to 40 -> gameOver
 	wire drop;
-	reg [6:0] currentYTop; //gets incremented after every drop
+	reg [6:0] currentYTop = startY; //gets incremented after every drop
 	
 	
 	//instantiate rate Divider for Alien drop
@@ -83,22 +83,20 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
 										
 										
 								
-								end else if ((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap) && 
-											(shotXcoord <= (startX + width + gap+ width + gap + width)) 
-										begin
+								end else if ((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap)) && 
+											(shotXcoord <= (startX + width + gap+ width + gap + width))) begin
 										
 										next_state = KILL_THREE;
 										
-								end else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap) && 
-											(shotXcoord <= (startX + width + gap+ width + gap + width +gap +width)))
-										begin
+								end else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap)) && 
+											(shotXcoord <= (startX + width + gap+ width + gap + width +gap +width))) begin
+										
 										
 										next_state = KILL_FOUR;
 										
 													
-								end else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap + width +gap) && 
-											(shotXcoord <= (startX + width + gap+ width + gap + width +gap + width +gap +width)) 
-										begin
+								end else if((shotYcoord == (currentYTop - height)) && (shotXcoord >= (startX + width + gap+ width + gap + width +gap + width +gap)) && 
+											(shotXcoord <= (startX + width + gap+ width + gap + width +gap + width +gap +width)))begin
 											
 										next_state = KILL_FOUR;
 										
@@ -117,11 +115,12 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
 										next_state = WIN_GAME;	
 										
 										end
-						  
+										
+						  end
 				DROP_ALIEN: next_state = WAIT_DROP_ALIEN;
-				WAIT_DROP_ALIEN = (clearedShift) ? INTAKE: WAIT_DROP_ALIEN;
+				WAIT_DROP_ALIEN: next_state = (clearedShift) ? INTAKE: WAIT_DROP_ALIEN;
 				KILL_ONE: next_state = WAIT_CLEAR_ONE;
-				WAIT_CLEAR_ONE: (cleared1) ? INTAKE: WAIT_CLEAR_ONE;
+				WAIT_CLEAR_ONE: next_state = (cleared1) ? INTAKE: WAIT_CLEAR_ONE;
 				KILL_TWO: next_state = WAIT_CLEAR_TWO;
 				WAIT_CLEAR_TWO: next_state = (cleared2) ? INTAKE: WAIT_CLEAR_TWO;
 				KILL_THREE: next_state = WAIT_CLEAR_THREE;
@@ -133,18 +132,18 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
 				LOSE_GAME: next_state = LOSE_GAME; 
 				WIN_GAME: next_state = WIN_GAME;
 				
+			default: next_state = INTAKE;
 			endcase
 		end
 		
 	always @(*)
    begin: enable_signals
-	
 				alienTopX <= 8'd0;
 				alienBottomX <= 8'd0;
 				alienTopY <= 7'd0;
 				alienBottomY <= 7'd0;
 				scoreCount <= 3'b0;
-				gameover <= 1'b0;
+				gameOver <= 1'b0;
 				youWin <= 1'b0; 
 				kill1 <= 1'b0; 
 				kill2 <= 1'b0; 
@@ -154,9 +153,8 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
 				moveDown <= 1'b0;
 				
 			case (current_state)
-			INTAKE:
 			DROP_ALIEN: begin moveDown <= 1'b1; currentYTop <= currentYTop +1; end
-			WAIT_DROP_ALIEN:
+			WAIT_DROP_ALIEN: moveDown <= 1'b1;
 			KILL_ONE: 
 					begin kill1 <= 1'b1; 
 							alienTopX <= (startX); 
@@ -177,27 +175,33 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY = 50000000)
 					
 				WAIT_CLEAR_TWO: begin kill2 <= 1'b1;  scoreCount <= scoreCount +1; end
 			
-			KILL_THREE: kill3 <= 1'b1; 
-							alienTopX <= (startX + width + gap +width+gap); 
+			KILL_THREE: begin 
+							kill3 <= 1'b1; 
+							alienTopX <= (startX + width + gap + width + gap); 
 							alienTopY <= (startY+currentYTop); 
 							alienBottomX <= (startX + width +gap + width + gap + width);
 							alienBottomY <= (startY+currentYTop + height);
+							end
 							
 				WAIT_CLEAR_THREE: begin kill3 <= 1'b1; scoreCount <= scoreCount +1; end
 			
-			KILL_FOUR: kill4 <= 1'b1; 
+			KILL_FOUR: 	begin
+							kill4 <= 1'b1; 
 							alienTopX <= (startX + width +gap + width + gap + width + gap); 
 							alienTopY <= (startY+currentYTop); 
 							alienBottomX <= (startX + width +gap + width + gap + width + gap + width);
 							alienBottomY <= (startY+currentYTop + height);
+							end
 							
 				WAIT_CLEAR_FOUR: begin kill4 <= 1'b1; scoreCount <= scoreCount +1;end
 			
-			KILL_FIVE: kill5 <= 1'b1; 
+			KILL_FIVE: begin
+							kill5 <= 1'b1; 
 							alienTopX <= (startX + width +gap + width + gap + width + gap + width + gap); 
 							alienTopY <= (startY+currentYTop); 
 							alienBottomX <= (startX + width +gap + width + gap + width + gap + width + gap + width);
 							alienBottomY <= (startY+currentYTop + height);
+							end
 			
 				WAIT_CLEAR_FIVE: begin kill5 <= 1'b1; scoreCount <= scoreCount +1;end
 			LOSE_GAME: gameOver <= 1'b1;
@@ -221,5 +225,40 @@ always@(posedge clk)
 
 		
 endmodule
-	
 
+module rate #(parameter CLOCK_FREQUENCY = 5)
+							(input clk, input reset, input [1:0] Speed,
+							output Enable);
+
+	reg [31:0] count;
+
+	always @( posedge (clk))
+		begin	
+		
+		if(~reset)	
+		
+				case (Speed)
+				2'b10:  count = (CLOCK_FREQUENCY / 3)-1; //shot speed (3 pixels per second)
+				2'b11:  count = (CLOCK_FREQUENCY * 4)-1; //aliens falling (once every 4 seconds)
+				endcase
+				
+			else if (Enable)
+			
+			case (Speed)
+			
+				2'b10:  count = (CLOCK_FREQUENCY / 3)-1; //shot speed (3 pixels per second)
+				2'b11:  count = (CLOCK_FREQUENCY * 4)-1; //aliens falling (once every 4 seconds)
+				endcase
+			
+			else if (count > 0) 
+			count<=count-1;
+		
+		
+		end	
+		assign Enable = (count == 32'b0)?'b1:'b0;		
+							//output enable as soon as we count down to 0
+				
+							
+endmodule
+
+	
