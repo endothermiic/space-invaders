@@ -167,7 +167,7 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 							alienBottomY <= (startY+currentYTop + height);
 					end
 					
-			WAIT_CLEAR_ONE: scoreCount <= scoreCount +1; //ATTENTION. MIGHT NEED SEP STATE
+				WAIT_CLEAR_ONE: begin kill1 <= 1'b1;  scoreCount <= scoreCount +1; end//ATTENTION. MIGHT NEED SEP STATE
 			
 			KILL_TWO : 
 					begin kill2 <= 1'b1; 
@@ -177,7 +177,7 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 							alienBottomY <= (startY+currentYTop + height);
 					end	
 					
-			WAIT_CLEAR_TWO: scoreCount <= scoreCount +1;
+				WAIT_CLEAR_TWO: begin kill2 <= 1'b1;  scoreCount <= scoreCount +1; end
 			
 			KILL_THREE: kill3 <= 1'b1; 
 							alienTopX <= (startX + width + gap +width+gap); 
@@ -185,7 +185,7 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 							alienBottomX <= (startX + width +gap + width + gap + width);
 							alienBottomY <= (startY+currentYTop + height);
 							
-			WAIT_CLEAR_THREE: scoreCount <= scoreCount +1;
+				WAIT_CLEAR_THREE: begin kill3 <= 1'b1; scoreCount <= scoreCount +1; end
 			
 			KILL_FOUR: kill4 <= 1'b1; 
 							alienTopX <= (startX + width +gap + width + gap + width + gap); 
@@ -193,7 +193,7 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 							alienBottomX <= (startX + width +gap + width + gap + width + gap + width);
 							alienBottomY <= (startY+currentYTop + height);
 							
-			WAIT_CLEAR_FOUR: scoreCount <= scoreCount +1;
+				WAIT_CLEAR_FOUR: begin kill4 <= 1'b1; scoreCount <= scoreCount +1;end
 			
 			KILL_FIVE: kill5 <= 1'b1; 
 							alienTopX <= (startX + width +gap + width + gap + width + gap + width + gap); 
@@ -201,7 +201,7 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 							alienBottomX <= (startX + width +gap + width + gap + width + gap + width + gap + width);
 							alienBottomY <= (startY+currentYTop + height);
 			
-			WAIT_CLEAR_FIVE: scoreCount <= scoreCount +1;
+				WAIT_CLEAR_FIVE: begin kill5 <= 1'b1; scoreCount <= scoreCount +1;end
 			LOSE_GAME: gameOver <= 1'b1;
 			WIN_GAME: youWin <= 1'b1;
 		
