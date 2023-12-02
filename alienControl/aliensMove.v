@@ -16,7 +16,7 @@ reg yIncremented = 1'b0;
 
 reg [6:0] address = 6'b0;
 wire [2:0] aliensColour;
-assign wire clearAny = clear1 || clear2 || clear3 || clear4 || clear 5;
+assign wire clearAny = clear1 || clear2 || clear3 || clear4 || clear5;
 
 aliens a0 (.address(address), .data(3'd000), .writeEn(clearAny), .colour(aliensColour))
 
