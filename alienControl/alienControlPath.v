@@ -1,4 +1,4 @@
-/NEED TO HOOK UP ONE MORE STATE FOR DEFAULT DRAW
+//NEED TO HOOK UP ONE MORE STATE FOR DEFAULT DRAW
 //POTENTIALLY - add score count check stages after every kill. yeah... prob neeed that
 
 module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
@@ -8,13 +8,12 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 									alienTopY, alienTopX, alienBottomX, alienBottomY); //needs to take care of the collidedWithAlien for the shots control
 	//FUNCTIONALITY:
 	
-	//Instantiate the row of aliens by default DOESN"T DO YET
 	//update position when need to mode down
 	//send out clear signals when an alien has been hit
 	
 	input clk, reset, clearedShift, cleared1, cleared2, cleared3, cleared4, cleared5;
 	input [7:0] shotXcoord;
-	input [6:0] sotYcoord;
+	input [6:0] shotYcoord;
 	output reg [7:0]  alienTopX, alienBottomX; 
 	output reg [6:0]  alienTopY, alienBottomY;
 	output reg [2:0] 	scoreCount;
@@ -34,7 +33,7 @@ module alienTalentManager (clk, reset, shotXcoord, shotYcoord, gameOver,
 	
 	
 	//instantiate rate Divider for Alien drop
-	rate (.CLOCK_FREQUENCY(50000000) alienDrop (.clk(clk), .reset(reset), .Speed(2'b11), .Enable(drop));
+	rate (.CLOCK_FREQUENCY(50000000)) alienDrop (.clk(clk), .reset(reset), .Speed(2'b11), .Enable(drop));
 	
 	
 	
