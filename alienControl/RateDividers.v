@@ -20,18 +20,19 @@ endmodule
 						 
 /*--------------------------------------------------------------------------------------------------------*/						
 
-module RateDivider #(parameter CLOCK_FREQUENCY = 50000000)
-							(input clk, input reset, input [1:0] Speed,
-							output Enable);
+ module rate #(parameter CLOCK_FREQUENCY = 5)
+						(input clk, input reset, input [1:0] Speed,
+							output reg Enable);
 
 	reg [31:0] count;
 
-	always @(posedge(drewHomeBase), posedge (clk))
+	always @(posedge (clk))
 		begin	
 		
-		if (drewHomeBase)	
-		
+		if (~reset)	
+				
 				case (Speed)
+				2'b00:  count = (CLOCK_FREQUENCY * 0.5)-1; //shot speed (3 pixels per second)
 				2'b10:  count = (CLOCK_FREQUENCY / 3)-1; //shot speed (3 pixels per second)
 				2'b11:  count = (CLOCK_FREQUENCY * 4)-1; //aliens falling (once every 4 seconds)
 				endcase
@@ -39,7 +40,7 @@ module RateDivider #(parameter CLOCK_FREQUENCY = 50000000)
 			else if (Enable)
 			
 			case (Speed)
-			
+				2'b00:  count = (CLOCK_FREQUENCY * 0.5)-1; //shot speed (3 pixels per second)
 				2'b10:  count = (CLOCK_FREQUENCY / 3)-1; //shot speed (3 pixels per second)
 				2'b11:  count = (CLOCK_FREQUENCY * 4)-1; //aliens falling (once every 4 seconds)
 				endcase
@@ -54,6 +55,7 @@ module RateDivider #(parameter CLOCK_FREQUENCY = 50000000)
 				
 							
 endmodule
+
 
 
 
