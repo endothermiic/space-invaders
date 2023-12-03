@@ -1,12 +1,11 @@
-module shots(clk, reset, keyPressed, xin, bulletX, bulletY, colour, drawEn);
+module shots(clk, reset, keyPressed, xin, bulletX, bulletY, colour, drawEn, collidedWithAlien);
 //xin comes from output of rocket.v - xout from rocket.v 
 
-input clk, reset, keyPressed;
-wire updatePosEn, bulletActive, waitEn, topReached, userIntakeEn;
-wire collidedWithAlien = 1'b0; //remove once aliens modulr working
+input clk, reset, keyPressed, collidedWithAlien;
+wire updatePosEn, bulletActive, waitEn,  userIntakeEn; //remove once aliens modulr working
 input [7:0] xin;
-output [7:0] bulletX;
-output [6:0] bulletY; 
+output  [7:0] bulletX;
+output  [6:0] bulletY; 
 output [2:0] colour;
 output drawEn;
 
