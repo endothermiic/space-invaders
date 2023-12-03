@@ -12,17 +12,12 @@ module aliensFalling #(parameter CLOCK_FREQUENCY = 50000000)
 		
 endmodule
 
-
-module shotRising #(parameter CLOCK_FREQUENCY = 50000000);
-
-endmodule
-
 						 
 /*--------------------------------------------------------------------------------------------------------*/						
 
  module rate #(parameter CLOCK_FREQUENCY = 5)
 						(input clk, input reset, input [1:0] Speed,
-							output reg Enable);
+							output Enable);
 
 	reg [31:0] count;
 
