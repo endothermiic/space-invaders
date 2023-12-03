@@ -313,8 +313,8 @@ module controlpath #(parameter CLOCK_FREQUENCY = 5)(clk,
 	reg [4:0] current_state, next_state;
 	
 	wire clickR, clickL;
-	rate   #(.CLOCK_FREQUENCY(5)) r (.clk(clk), .reset(reset), .Speed(2'b00), .Enable(clickR));
-	rate  #(.CLOCK_FREQUENCY(5)) l (.clk(clk), .reset(reset), .Speed(2'b00), .Enable(clickL));
+	rate   #(.CLOCK_FREQUENCY(CLOCK_FREQUENCY)) r (.clk(clk), .reset(reset), .Speed(2'b00), .Enable(clickR));
+	rate  #(.CLOCK_FREQUENCY(CLOCK_FREQENCY)) l (.clk(clk), .reset(reset), .Speed(2'b00), .Enable(clickL));
 							
 	localparam S_TITLE_PAGE = 5'd0, 
 				  S_CLEAR = 5'd1,
