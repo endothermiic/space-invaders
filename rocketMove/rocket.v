@@ -291,7 +291,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 endmodule
 
 
-module controlpath(clk,
+module controlpath #(parameter CLOCK_FREQUENCY = 5)(clk,
 							start,
 							drewGameOver,
 							hitEdge,
