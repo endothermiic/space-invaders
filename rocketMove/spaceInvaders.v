@@ -44,7 +44,7 @@ module spaceInvaders
 	wire reset, clk, start, left, right, screenCleared, drewHomeBase, drawEn;
 	
 	rocket r0 (.reset(SW[0]), .clk(CLOCK_50), .start(~KEY[3]), .left(~KEY[2]), .right(~KEY[0]), .screenCleared(screenCleared), .drewHomeBase(drewHomeBase), .xout(xout), .yout(yout), .colourOut(colour), .drawEn(drawEn));
-	
+
 
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
@@ -72,5 +72,5 @@ module spaceInvaders
 			
 	// Put your code here. Your code should produce signals x,y,colour and writeEn
 	// for the VGA controller, in addition to any other functionality your design may require.
-
+	hexdecoder u7 (.c(scoreCount), .display(HEX[0]));
 endmodule
