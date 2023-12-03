@@ -78,7 +78,7 @@ module datapath (input clk, reset, leftEn, rightEn, screenClearEn, drawEn,
 	wire [2:0]gameOverColour;
 	
 	mothership u0 (.address(address), .clock(clk), .data(3'b0),	.wren(1'b0), .q(shipColour)); //has rocket mif data
-   gameovernew g0 (.clock(clk), .address(addressFS), .q(gameOverColour)); //has game over mif data (fullscreen)
+  	g g0 (.clock(clk), .address(addressFS), .q(gameOverColour)); //has game over mif data (fullscreen)
 	
 	reg rocketCleared = 1'b0, leftMovedCoord = 1'b0, rightMovedCoord = 1'b0;
 	
