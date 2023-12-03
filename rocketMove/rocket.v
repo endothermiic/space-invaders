@@ -310,7 +310,7 @@ module controlpath(clk,
 	input clk, start, drewGameOver, hitEdge, command_left, command_right, reset, screenCleared, drewHomebase, leftMoved, rightMoved;
 	output reg leftEn, rightEn, screenClearEn, drawEn;
 
-	reg [2:0] current_state, next_state;
+	reg [4:0] current_state, next_state;
 	
 	wire clickR, clickL;
 	rate   #(.CLOCK_FREQUENCY(5)) r (.clk(clk), .reset(reset), .Speed(2'b00), .Enable(clickR));
