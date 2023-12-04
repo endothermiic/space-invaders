@@ -2,7 +2,7 @@ module shots(clk, reset, keyPressed, xin, bulletX, bulletY, colour, drawEn, coll
 //xin comes from output of rocket.v - xout from rocket.v 
 
 input clk, reset, keyPressed, collidedWithAlien;
-wire updatePosEn, bulletActive, waitEn,  userIntakeEn; //remove once aliens modulr working
+wire updatePosEn, updatedBulletPosition, clearEn, cleared, checkPosEn, checkCompleted, updateDelay; //remove once aliens module working
 input [7:0] xin;
 output  [7:0] bulletX;
 output  [6:0] bulletY; 
@@ -10,23 +10,25 @@ output [2:0] colour;
 output drawEn;
 
 
-datapathshot d0 (.clk(clk), .reset(reset), .updatePosEn(updatePosEn), .waitEn(waitEn), .xin(xin), .bulletX(bulletX),
-					.bulletY(bulletY), .topReached(topReached), .colour(colour), .bulletActive(bulletActive));
+datapathshot d0 (.clk(clk), .reset(reset), .updatePosEn(updatePosEn), .clearEn(clearEn), .xin(xin), .bulletX(bulletX),
+					.bulletY(bulletY), .topReached(topReached), .colour(colour), .updatedBulletPosition(updatedBulletPosition), .cleared(cleared), .checkPosEn(checkPosEn), .checkCompleted(checkCompleted), .updateDelay(updateDelay));
+					
 controlpathshot c0 (.clk(clk), .reset(reset), .keyPressed(keyPressed), .topReached(topReached), .collidedWithAlien(collidedWithAlien),
-	.updatedBulletPosition(bulletActive), .userIntakeEn(userIntakeEn), .updatePosEn(updatePosEn), .waitEn(waitEn), .drawEn(drawEn));
-
+	.updatedBulletPosition(updatedBulletPosition), .updatePosEn(updatePosEn), .clearEn(clearEn), .drawEn(drawEn), .checkPosEn(checkPosEn), .cleared(cleared), .checkCompleted(checkCompleted), .updateDelay(updateDelay));
+	
 endmodule
 
-module datapathshot(clk, reset, updatePosEn, waitEn, xin, bulletX, bulletY, topReached, bulletActive, colour);
-	input clk, reset, updatePosEn, waitEn;
-	input [7:0] xin; 
+module datapathshot (clk, reset, updatePosEn, clearEn, cleared, xin, bulletX, bulletY, topReached, updatedBulletPosition, colour, checkPosEn, checkCompleted, 	updateDelay);
+	input clk, reset, updatePosEn, clearEn, checkPosEn, updateDelay;
+   input [7:0] xin; 
 	wire [7:0] xinorig = xin;
 	output reg [7:0] bulletX; 
 	output reg [6:0] bulletY; 
 //	reg [7:0] xout; 
 //	reg [6:0] yout; 
 	output reg [2:0] colour;
-	output reg topReached, bulletActive;
+	output reg topReached, updatedBulletPosition, cleared, checkCompleted;
+	reg incremented;
 	
 	always @(posedge clk)
 	begin
@@ -36,58 +38,108 @@ module datapathshot(clk, reset, updatePosEn, waitEn, xin, bulletX, bulletY, topR
 				bulletY <= 7'd105;
 				topReached <= 1'b0;
 				colour <= 3'b000;
-				bulletActive <= 1'b0;
+				updatedBulletPosition <= 1'b0;
 				topReached <= 1'b0;
+				checkCompleted <=1'b0;
+				cleared <= 1'b0;
+				incremented <= 1'b0;
+				
+				
 			end
-		else if (updatePosEn)
+			
+		else if (clearEn) 
+		begin 
+			bulletX <= xinorig;
+			colour <= 3'b000;
+			cleared <= 1'b1;
+			checkCompleted <=1'b0;
+			topReached <= 1'b0;	
+			updatedBulletPosition <= 1'b0;
+			incremented <= 1'b0;
+			
+		end
+		
+		else if (checkPosEn)
 			begin
-				bulletActive <= 1'b1;
-				if (bulletY > 0) 
-					begin
-						bulletY <= bulletY - 5; //if not at top, move 5 units up - clear and redraw
-						bulletX <= xinorig;
-						colour <= 3'b111;
-					end
-				else begin
+			if (bulletY == 0)
+				begin
 					bulletY <= 7'd105;
-					bulletX <= xinorig;
+					bulletX <= 8'd0;
 					topReached <= 1'b1;
+					cleared <= 1'b0;
+					updatedBulletPosition <= 1'b0;
+					incremented <= 1'b0;
 				end
-			end
-		else if (waitEn) colour <= 3'b000;
-	end
+				else begin 
+				checkCompleted <= 1'b1; 
+				topReached <= 1'b0;
+				cleared <= 1'b0; 
+				updatedBulletPosition <= 1'b0;
+				incremented <= 1'b0;	end
+			end	
+			
+		else if (updatePosEn && ~incremented) 
+					begin
+					cleared <= 1'b0;
+					checkCompleted <=1'b0;
+					topReached <= 1'b0;
+					bulletY <= bulletY - 5; //if not at top, move 5 units up - clear and redraw
+					colour <= 3'b111;
+					updatedBulletPosition <= 1'b1;
+					checkCompleted <=1'b0;
+					incremented <= 1'b1;
+				
+							
+		end
+								
+					
+end
 
-	
 endmodule
 
 
 
-module controlpathshot (clk, reset, keyPressed, topReached, collidedWithAlien, updatedBulletPosition, userIntakeEn, updatePosEn, waitEn, drawEn);
+module controlpathshot #(parameter CLOCK_FREQUENCY = 1) (clk, reset, keyPressed, topReached, collidedWithAlien, updatedBulletPosition, cleared, updatePosEn, checkPosEn, clearEn, drawEn, checkCompleted, updateDelay);
 
-	input clk, reset, keyPressed, topReached, collidedWithAlien, updatedBulletPosition;
-	output reg userIntakeEn, updatePosEn, waitEn, drawEn;
+	input clk, reset, keyPressed, topReached, collidedWithAlien, updatedBulletPosition, cleared, checkCompleted;
+	output reg checkPosEn, updatePosEn, clearEn, drawEn, updateDelay;
 	
 	reg [2:0] current_state, next_state;
+	wire bulletSpeed;
 	
-	localparam INTAKE = 2'd0, // Set frame counter for top boundary check to 0
+	rate #(.CLOCK_FREQUENCY(CLOCK_FREQUENCY)) bullet (.clk(clk), .reset(reset), .Speed(2'b10), .Enable(bulletSpeed));
+	
+	
+	localparam INTAKE = 3'd0, // Set frame counter for top boundary check to 0
 				  //if bullet exists - erase it (ex if we reached top of screen or killed an alien)
 												
-					
-				  UPDATE_POSITION = 2'd1, //update bullet position, draw bullet position, 
-						          //pass the coordinates to the alienTalentManager back to check for collision
+				 CLEAR = 3'd1,  //clear the rocket 
+				 
+				 CHECK_POSITION = 3'd2, //check for end position and collision
+						          
 				  
-				  WAIT = 2'd2; //check for collision, check for top reached, 
+				 UPDATE_POSITION = 3'd3, //update bullet position, draw bullet position,
+				
+				 UPDATE_WAIT = 3'd4;
+				 
+				 
 	
 
 always @(*)
 	begin: state_table
 	
 	case(current_state)
-			INTAKE: next_state = (keyPressed) ? UPDATE_POSITION : INTAKE;
+			INTAKE: next_state = (keyPressed) ? CLEAR : INTAKE;
 			
-			UPDATE_POSITION: next_state = (collidedWithAlien || topReached) ? INTAKE : WAIT;
+			CLEAR: next_state = (cleared) ? CHECK_POSITION: CLEAR;
 			
-			WAIT: next_state = (updatedBulletPosition) ? UPDATE_POSITION : WAIT; 
+			CHECK_POSITION: next_state = (collidedWithAlien || topReached) ? INTAKE : (checkCompleted) ? UPDATE_POSITION: CHECK_POSITION;
+				
+			UPDATE_POSITION: next_state = (updatedBulletPosition) ? UPDATE_WAIT: UPDATE_POSITION;
+			
+			UPDATE_WAIT: next_state = (bulletSpeed) ? CLEAR: UPDATE_WAIT;
+	
+		
 
 		default: next_state = INTAKE;
 	endcase
@@ -96,16 +148,20 @@ end
  
 always @(*)
    begin: enable_signals
-	
-		userIntakeEn <= 1'b0;
+		checkPosEn <=1'b0;
 		updatePosEn <= 1'b0;
-		waitEn <= 1'b0;
+		clearEn <= 1'b0;
 	   drawEn <= 1'b0;
-		
+		updateDelay <= 1'b0;
+
 	case(current_state)
-		INTAKE: userIntakeEn <= 1'b1;
-		UPDATE_POSITION: begin updatePosEn <= 1'b1; drawEn <= 1'b1; end
-		WAIT: waitEn <= 1'b1;
+		CLEAR: begin clearEn <= 1'b1; drawEn <= 1'b1; end
+		
+		CHECK_POSITION: checkPosEn <= 1'b1;
+		
+		UPDATE_POSITION: begin updatePosEn <= 1'b1; drawEn <= 1'b1; updateDelay <= 1'b1; end
+		
+		
 	endcase
 		
 end
@@ -120,4 +176,41 @@ always@(posedge clk)
 			
 		else current_state <= next_state;
 	end
+endmodule
+
+
+ module rate #(parameter CLOCK_FREQUENCY = 1)
+						(input clk, input reset, input [1:0] Speed,
+							output Enable);
+
+	reg [31:0] count;
+
+	always @(posedge (clk))
+		begin	
+		
+		if (~reset)	
+				
+				case (Speed)
+				2'b00:  count = (CLOCK_FREQUENCY * 0.5)-1; //shot speed (3 pixels per second)
+				2'b10:  count = (CLOCK_FREQUENCY * 4)-1; //shot speed (3 pixels per second)
+				2'b11:  count = (CLOCK_FREQUENCY * 4)-1; //aliens falling (once every 4 seconds)
+				endcase
+				
+			else if (Enable)
+			
+			case (Speed)
+				2'b00:  count = (CLOCK_FREQUENCY * 0.5)-1; //shot speed (3 pixels per second)
+				2'b10:  count = (CLOCK_FREQUENCY * 4)-1; //shot speed (3 pixels per second)
+				2'b11:  count = (CLOCK_FREQUENCY * 4)-1; //aliens falling (once every 4 seconds)
+				endcase
+			
+			else if (count > 0) 
+			count<=count-1;
+		
+		
+		end	
+		assign Enable = (count == 32'b0)?'b1:'b0;		
+							//output enable as soon as we count down to 0
+				
+							
 endmodule
