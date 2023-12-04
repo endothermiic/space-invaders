@@ -7,7 +7,7 @@ input [7:0] xin;
 output  [7:0] bulletX;
 output  [6:0] bulletY; 
 output [2:0] colour;
-output drawEn;
+output drawEn; 
 
 
 datapathshot d0 (.clk(clk), .reset(reset), .updatePosEn(updatePosEn), .clearEn(clearEn), .xin(xin), .bulletX(bulletX),
