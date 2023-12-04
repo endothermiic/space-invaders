@@ -13,7 +13,7 @@ module rocket (reset, clk, start, left, right, screenCleared, drewHomeBase, xout
 	parameter yStart = 7'd105;
     input reset, clk, start, left, right;
 	
-    output  [7:0] xout;  
+   output  [7:0] xout;  
 	output  [6:0] yout;
 	output  [2:0] colourOut; 
 	output drawEn, screenCleared, drewHomeBase;
@@ -389,8 +389,8 @@ module controlpath #(parameter CLOCK_FREQUENCY = 50) (clk,
 								else next_state = INTAKE;
 						end
 
-						CLEAR_ROCKET_LEFT_DELAY: next_state <= CLEAR_ROCKET_LEFT;
-						CLEAR_ROCKET_RIGHT_DELAY: next_state <= CLEAR_ROCKET_RIGHT;
+						CLEAR_ROCKET_LEFT_DELAY: next_state = CLEAR_ROCKET_LEFT;
+						CLEAR_ROCKET_RIGHT_DELAY: next_state = CLEAR_ROCKET_RIGHT;
 						CLEAR_ROCKET_LEFT: next_state = rocketCleared ? MOVE_LEFT : CLEAR_ROCKET_LEFT;
 						CLEAR_ROCKET_RIGHT: next_state = rocketCleared ? MOVE_RIGHT : CLEAR_ROCKET_RIGHT;
 
@@ -411,7 +411,7 @@ module controlpath #(parameter CLOCK_FREQUENCY = 50) (clk,
 						RIGHT_WAIT: next_state = clickR ? INTAKE : RIGHT_WAIT;
 						
 						GAME_OVER: next_state = drewGameOver ? TITLE_PAGE : GAME_OVER;			
-			default: next_state = INTAKE;
+			
 		endcase
 	end
 
@@ -423,7 +423,7 @@ module controlpath #(parameter CLOCK_FREQUENCY = 50) (clk,
 		rocketClearREn = 1'b0;
 		rocketDrawEn = 1'b0;
 		inIntake = 1'b0;
-		titlePageEn <= 1'b0;
+		titlePageEn = 1'b0;
 		gameOverEn = 1'b0;
 		leftEn = 1'b0;
 		rightEn = 1'b0;
@@ -450,6 +450,7 @@ module controlpath #(parameter CLOCK_FREQUENCY = 50) (clk,
 						drawEn = 1'b1;
 					end
 				GAME_OVER: begin drawEn = 1'b1;  gameOverEn = 1'b1; end
+
 		endcase			
 	end
 										
@@ -457,7 +458,7 @@ module controlpath #(parameter CLOCK_FREQUENCY = 50) (clk,
 	begin: reset_conditions
 		if(~reset) 
 			begin
-				current_state = TITLE_PAGE;
+				current_state <= TITLE_PAGE;
 			end
 			
 		else
