@@ -1,5 +1,5 @@
 module shots(clk, reset, keyPressed, xin, bulletX, bulletY, colour, drawEn, collidedWithAlien);
-//xin comes from output of rocket.v - xout from rocket.v 
+//xin comes from output of rocket.v 
 
 input clk, reset, keyPressed, collidedWithAlien;
 wire updatePosEn, updatedBulletPosition, clearEn, cleared, checkPosEn, checkCompleted, updateDelay, topReached; //remove once aliens module working
