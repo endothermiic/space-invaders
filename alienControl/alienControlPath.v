@@ -1,6 +1,3 @@
-//NEED TO HOOK UP ONE MORE STATE FOR DEFAULT DRAW
-//POTENTIALLY - add score count check stages after every kill. yeah... prob neeed that
-
 module alienTalentManager #(parameter CLOCK_FREQUENCY = 2)
 									(clk, reset, shotXcoord, shotYcoord, gameOver,
 									youWin, scoreCount, 
