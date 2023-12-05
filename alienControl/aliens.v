@@ -5,7 +5,7 @@
 
 
 
-module aliensMove #(parameter CLOCK_FREQUENCY=1)(clk, reset, xout, yout, colourOut, a_drawEn, shotXCoord, shotYCoord, score, collidedWithAlien);
+module aliens #(parameter CLOCK_FREQUENCY=1)(clk, reset, xout, yout, colourOut, a_drawEn, shotXCoord, shotYCoord, score, collidedWithAlien);
 
 input clk, reset;
 input [7:0] shotXCoord;
