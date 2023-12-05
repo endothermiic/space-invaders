@@ -1,7 +1,8 @@
 
-`include "a.v"
-`include "g.v"
-`include "yw.v"
+//`include "a.v"
+//`include "g.v"
+//`include "yw.v"
+
 
 
 module aliensMove #(parameter CLOCK_FREQUENCY=1)(clk, reset, xout, yout, colourOut, a_drawEn, shotXCoord, shotYCoord, score, collidedWithAlien);
@@ -19,7 +20,7 @@ output collidedWithAlien;
 
 wire kill1, kill2, kill3, kill4, kill5, moveDown, incremented;
 wire cleared1, cleared2, cleared3, cleared4, cleared5, movedDown;
-wire gameWon, gameDone, startRow;
+wire gameWon, gameDone, startRow, resetMove;
 
 wire [7:0] xtop; 
 wire [7:0] xbottom;
@@ -55,7 +56,8 @@ aliensDatapath d1(.clk(clk),
 						.startRow(startRow),
 						.scoreCount(scoreCount),
 						.score(score),
-						.incremented(incremented));
+						.incremented(incremented),
+						.resetMove(resetMove));
 
 
 alienTalentManager #(.CLOCK_FREQUENCY(CLOCK_FREQUENCY)) c1 (.clk(clk), 
@@ -83,14 +85,15 @@ alienTalentManager #(.CLOCK_FREQUENCY(CLOCK_FREQUENCY)) c1 (.clk(clk),
 									.alienBottomY(ybottom),
 									.startRow(startRow),
 									.scoreCount(scoreCount),
-									.incremented(incremented));
+									.incremented(incremented),
+									.resetMove(resetMove));
 
 
 endmodule
 
 
 
-module aliensDatapath(input clk, input reset, input gameWon, input gameDone, input [7:0]xtop, input [6:0]ytop, input [7:0]xbottom, input [6:0]ybottom, input clear1, clear2, clear3, clear4, clear5, moveDown, 
+module aliensDatapath(input clk, input reset, input gameWon, input resetMove, input gameDone, input [7:0]xtop, input [6:0]ytop, input [7:0]xbottom, input [6:0]ybottom, input clear1, clear2, clear3, clear4, clear5, moveDown, 
 				output reg [7:0]xout, //for checngiing pixels on the screen
 				output reg [6:0]yout, //on screen
 				output reg [2:0]colourOut,
@@ -164,7 +167,6 @@ always@(posedge clk)
             clear5set <= 1'b0;
 				yIncremented = 1'b0;
 				movedDown <= 1'b0;
-			
 				colourOut <= 3'b0;
 				incremented <= 1'b1;
 			end
@@ -255,8 +257,8 @@ always@(posedge clk)
 		begin
             if (!clear2set)
 				begin
-					yout <= 7'd10;
-					xout <= 7'd42;
+					yout <= ytop;
+					xout <= xtop;
 					clear2set <= 1'b1;
 					clearAny <= 1'b1;
 				
@@ -266,6 +268,7 @@ always@(posedge clk)
 
             if (yout < (ybottom+1))  //clear
 					begin
+					
 					if (xout == xbottom) //8'd53
 						begin
 							xout <= 8'd42; //reset to original
@@ -273,22 +276,46 @@ always@(posedge clk)
 							colourOut <= 3'b0;
 							address <= address + 11'd149;
 						end
+						
+						
+						if (xout == xbottom)
+								begin
+									
+									address <= address + 11'd149;
+									colourOut <= 3'b0;
+
+
+										if (yout < (ybottom + 1)) 
+											begin yout <= yout + 1; 
+													xout <= xtop; //reset to original
+													address <= address + 11'd149; // change
+													clearAny <= 1'b1;
+
+											end		
+								end
+								
+								
+
 					else
 						begin
 							xout <= xout + 1;
 							colourOut <= 3'b0;
 							clearAny <= 1'b1;
+							address <= address + 1;
+							
 						end
 					end
 			if (xout == xbottom && yout == ybottom) begin cleared2 <= 1'b1; clearAny <= 1'b0; end
 
 			end
+			
+			
 		else if (clear3) //clear high stays high until done 
 		begin
 			if (!clear3set)
 				begin
-					yout <= 7'd10;
-					xout <= 7'd74;
+					yout <= ytop; 
+					xout <= xtop;
 					clear3set <= 1'b1;
 					address <= 11'h4a;
 				end
@@ -296,9 +323,10 @@ always@(posedge clk)
             begin 
             if (yout < (ybottom+1))  //clear
 				begin
-					if (xout == 8'd85)
+					if (xout == xbottom)
+					
 						begin
-							xout <= 8'd74; //reset to original
+							xout <= xtop; //reset to original
 							yout <= yout + 1;
 							colourOut <= 3'b0;
 							address <= address + 11'd149;
@@ -321,8 +349,8 @@ always@(posedge clk)
 			begin
 			if (!clear4set)
 				begin
-					yout <= 7'd10;
-					xout <= 7'd106;
+					yout <= ytop; 
+					xout <= xtop;
 					clear4set <= 1'b1;
 					address <= 11'h6a;
 					
@@ -332,9 +360,9 @@ always@(posedge clk)
 
                 if (yout < (ybottom+1))  //clear
 				begin
-					if (xout == 8'd117)
+					if (xout == xbottom)
 						begin
-							xout <= 8'd106; //reset to original
+							xout <= xtop; //reset to original
 							yout <= yout + 1;
 							colourOut <= 3'b0;
 							address <= address + 11'd149;
@@ -370,8 +398,8 @@ always@(posedge clk)
 		begin
 			if (!clear5set)
 				begin
-					yout <= 7'd10; //reset these as well
-					xout <= 7'd138;
+					yout <= ytop; 
+					xout <= xtop;
 					clear5set <= 1'b1;
 					
 					address <= 1'h8a;
@@ -382,9 +410,9 @@ always@(posedge clk)
 
                 if (yout < (ybottom+1))  //clear
 				begin
-					if (xout == 8'd149)
+					if (xout == xbottom)
 						begin
-							xout <= 8'd138; //reset to original
+							xout <= xtop; //reset to original
 							yout <= yout + 1;
 							colourOut <= 3'b0;
 							address <= address + 11'd149;
@@ -472,7 +500,7 @@ always@(posedge clk)
 				end
 		end
 
-
+	if (resetMove) begin movedDown <= 1'b0; end
 
 	if (gameDone)
 		begin 
@@ -529,7 +557,10 @@ always@(posedge clk)
 						end
 				end
 	end
-
+	
+	
+	
+	
 end
 
 //reset clearAny to 0 once completed , set cleared to 1
@@ -546,7 +577,7 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 									youWin, scoreCount, 
 									kill1, kill2, kill3, kill4, kill5, moveDown,
 									clearedShift, cleared1, cleared2, cleared3, cleared4, cleared5,
-									alienTopY, alienTopX, alienBottomX, alienBottomY, startRow, incremented, drawEn); //needs to take care of the collidedWithAlien for the shots control
+									alienTopY, alienTopX, alienBottomX, alienBottomY, startRow, incremented, drawEn, resetMove); //needs to take care of the collidedWithAlien for the shots control
 	//FUNCTIONALITY:
 	
 	//update position when need to mode down
@@ -558,7 +589,7 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 	input [2:0] scoreCount;
 	output reg [7:0]  alienTopX, alienBottomX; 
 	output reg [6:0]  alienTopY, alienBottomY;
-	output reg gameOver, youWin, kill1, kill2, kill3, kill4, kill5, moveDown, drawEn;
+	output reg gameOver, youWin, kill1, kill2, kill3, kill4, kill5, moveDown, drawEn, resetMove;
 	
 
 	parameter width = 8'd11;
@@ -603,10 +634,12 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 				FIRST_POSITION: next_state = (startRow) ? INTAKE : FIRST_POSITION;
 				
 				INTAKE: begin 
+		
 								if(drop) begin
 								next_state = DROP_ALIEN;
 								end
 								
+	
 								else if ((shotYcoord <= (currentYTop + height)) && (shotXcoord >= startX) && 
 											(shotXcoord <= startX + width) && (~killed1))
 										begin
@@ -643,6 +676,12 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 										
 										end
 										
+								else if (scoreCount == 3'd5)
+										begin
+										
+										next_state = WIN_GAME;	
+										
+										end
 							
 								else if (dropCounter == 5'd18) 
 										begin
@@ -651,12 +690,6 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 											
 										end
 										
-								else if (scoreCount == 2'd5)
-										begin
-										
-										next_state = WIN_GAME;	
-										
-										end
 							else next_state = INTAKE;
 										
 						  end
@@ -693,6 +726,7 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 			killed4 <= 1'b0;
 			killed5 <= 1'b0;
 			drawEn <= 1'b0;
+			resetMove <= 1'b0;
 
 			
 		end	
@@ -710,7 +744,7 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 				kill4 <= 1'b0; 
 				kill5 <= 1'b0;
 				moveDown <= 1'b0;
-	
+				resetMove <= 1'b0;
 				drawEn <= 1'b0;
 				
 				
@@ -720,7 +754,7 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 
 			DROP_ALIEN: begin moveDown <= 1'b1; drawEn <= 1'b1; end
 			
-			INCREMENT_DROP_ALIEN: begin dropCounter <= dropCounter + 1; currentYTop <= currentYTop +5; end
+			INCREMENT_DROP_ALIEN: begin resetMove <=1'b1; dropCounter <= dropCounter + 1; currentYTop <= currentYTop +5; end
 		
 			KILL_ONE: 
 					begin kill1 <= 1'b1; 
@@ -792,3 +826,4 @@ module alienTalentManager #(parameter CLOCK_FREQUENCY)
 
 		
 endmodule
+
